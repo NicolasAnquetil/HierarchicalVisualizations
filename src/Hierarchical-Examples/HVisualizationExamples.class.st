@@ -98,16 +98,6 @@ HVisualizationExamples >> example07Hierarchical [
 ]
 
 { #category : #examples }
-HVisualizationExamples >> example08 [
-	<script: 'self new example08RSChart open'>
-	| b |
-	b := HPharoNodeBuilder new.
-	b packageQuery: 'Roassal3-Chart*'.
-	b build.
-	^ b rootNode
-]
-
-{ #category : #examples }
 HVisualizationExamples >> example08RSChart [
 	<script: 'self new example08RSChart open'>
 	| b |
@@ -151,4 +141,22 @@ HVisualizationExamples >> example10RSChartLabeler [
 		yourself).
 	^ visualization
 	
+]
+
+{ #category : #examples }
+HVisualizationExamples >> example11HierarchicalDiferentLayout [
+	<script: 'self new example11HierarchicalDiferentLayout open'>
+	| b |
+	b := HPharoNodeBuilder new.
+	b packageQuery: 'Hierarchical*'.
+	b build.
+	b rootNode layout: RSVerticalLineLayout new. 
+	b rootNode children do: [ :child | 
+		child layout: RSFlowLayout new.
+		child children do: [:c | 
+			c layout: (RSForceBasedLayout new charge: -600; doNotUseProgressBar)
+			
+			 ] ].
+	^ b rootNode
+
 ]

@@ -102,11 +102,13 @@ HSimpleVisualizationBuilder >> buildCompositeFullNodeIn: shape [
 	title := { titleBox. icon. label } asShape.
 	shape propertyAt: #background put: titleBox.
 	childrenShapes := self childrenFor: node.
-	RSFlowLayout new gapSize: 10; on: childrenShapes.
+	self layoutOn: childrenShapes parent: node.
+	
 	shape schildren: childrenShapes.
 	childrenShapes do: [ :child | child sparent: shape ].
 	children := childrenShapes asShape
 		padding: 10.
+	childrenShapes do: [ :child | child model position: child position ].
 	title width < children width
 		ifTrue: [ titleBox width: children width. title adjustToChildren ]
 		ifFalse: [ children width: title width ].
@@ -226,11 +228,17 @@ HSimpleVisualizationBuilder >> labeler: anHLabeler [
 	labeler := anHLabeler
 ]
 
-{ #category : #accessing }
-HSimpleVisualizationBuilder >> layoutOn: aGroupOfShapes [
-	RSFlowLayout new
-		gapSize: 50;
-		on: aGroupOfShapes.
+{ #category : #layout }
+HSimpleVisualizationBuilder >> layoutOn: aGroupOfShapes parent: shape [
+	aGroupOfShapes ifEmpty: [ ^ self ].
+	
+	aGroupOfShapes first model position ifNotNil: [ 
+		aGroupOfShapes do: [ :child | child position: child model position ].
+		^ self.
+		 ].
+	self relayout: aGroupOfShapes parent: shape.
+	
+	
 ]
 
 { #category : #hooks }
@@ -263,8 +271,9 @@ HSimpleVisualizationBuilder >> nodeAnnouncer [
 			color: Smalltalk ui theme caretColor);
 		@ self menuInteraction;
 		@ self highlightable;
-		when: RSPositionChangedEvent do: [ :evt | self resizeParent: evt ];
-		yourself .
+		
+		@ (HResizeParentWhenChildMoves new labeler: self labeler);
+		yourself.
 	^ baseNode announcer
 	
 ]
@@ -313,6 +322,18 @@ HSimpleVisualizationBuilder >> rebuildShape: shape [
 	canvas signalUpdate.
 ]
 
+{ #category : #layout }
+HSimpleVisualizationBuilder >> relayout: aGroupOfShapes parent: shape [
+	shape layout ifNil: [ 
+		RSFlowLayout new
+			gapSize: 10;
+			on: aGroupOfShapes. 
+		^ self ].
+	shape layout on: aGroupOfShapes.
+	
+	
+]
+
 { #category : #hooks }
 HSimpleVisualizationBuilder >> removeShapeWithAllChildren: shape [
 	
@@ -341,7 +362,7 @@ HSimpleVisualizationBuilder >> renderIn: aCanvas [
 		aCanvas signalUpdate.
 		 ].
 	self renderLinesIn: aCanvas.
-	self layoutOn: rootShapes.
+	self layoutOn: rootShapes parent: rootNode.
 	
 ]
 
@@ -359,55 +380,6 @@ HSimpleVisualizationBuilder >> renderLinesIn: aCanvas [
 		when: RSMouseLeave do: [ :evt | evt shape color: color; signalUpdate ].
 	self menuInteraction onShape: announcer.
 	aCanvas lines do: [ :line| line announcer: announcer ].
-]
-
-{ #category : #hooks }
-HSimpleVisualizationBuilder >> resizeParent: event [
-	| parent children title titleBox list boxChildren lastPosition
-	shape delta brother referencePosition |
-	shape := event shape.
-	
-	parent := shape sparent.
-	parent ifNil: [ ^ self ].
-	parent isShape ifFalse: [ ^ self ].
-	
-	lastPosition := parent position.
-	delta := event newPosition - event oldPosition.
-	brother := referencePosition := nil.
-	parent schildren 
-		detect: [:child | child ~= shape ]
-		ifFound: [:child | 
-			brother := child.
-			referencePosition := child parent globalMatrix 
-				transform: child position ].
-	children := shape parent.
-	children adjustToChildren; padding: 10.
-	title := parent children first.
-	titleBox := title children first.
-	titleBox extent: title children allButFirst extent + 10.
-	title adjustToChildren.
-	boxChildren := parent children second.
-	title width < children width
-		ifTrue: [ titleBox width: children width. title adjustToChildren ]
-		ifFalse: [ children width: title width ].
-	list := { title. children }.
-	self labeler position = #below ifTrue: [ list := { children. title } ].
-	RSVerticalLineLayout new
-		gapSize: 0;
-		on: list.
-	boxChildren fromRectangle: children encompassingRectangle.
-	parent announcer: nil.
-	parent adjustToChildren.
-	parent announcer: self nodeAnnouncer.
-	
-	parent schildren size = 1 ifTrue: [ 
-		shape position: event oldPosition.
-		parent translateTo: lastPosition + delta.
-		^ self ].
-	
-	parent position: lastPosition.
-	delta := (brother parent globalMatrix transform: brother position) - referencePosition.
-	parent translateBy: delta negated.
 ]
 
 { #category : #accessing }
@@ -440,8 +412,7 @@ HSimpleVisualizationBuilder >> shapeFor: node [
 	(node isExpanded and: [node hasChildren]) 
 		ifTrue: [ self buildCompositeFullNodeIn: shape ]
 		ifFalse: [ self buildCompositeEmptyNodeIn: shape ].
-	shape
-		when: RSPositionChangedEvent do: [ :evt | evt shape model position: evt position ].
+	
 	node 
 		removeInteractionIfPresent: self class;
 		when: HNodeAddedEvent do: [ :evt | self rebuildRootShape: shape ];

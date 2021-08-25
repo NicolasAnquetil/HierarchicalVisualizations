@@ -5,6 +5,7 @@
 This project provide a small API to build hierarchical visualization using the [Pharo](http://pharo.org) programming language. HierarchicalVisualizations uses [Roassal](https://github.com/ObjectProfile/Roassal3).
 
 ### Install
+
 Execute the following code snippet in a Playground:
 
 ```Smalltalk
@@ -42,3 +43,4 @@ Node can be collapsed or expanded:
 
 <img width="500" alt="portfolio_view" src="https://raw.githubusercontent.com/ObjectProfile/HierarchicalVisualizations/main/scripts/simpleExample02.png">
 
+New menu items can be defined by creating a subclass of `HAbstractMenuItem`. The package [`Hierarchical-Roassal3-Menu`](https://github.com/ObjectProfile/HierarchicalVisualizations/tree/main/src/Hierarchical-Roassal3-Menu) contains many examples on how to define a new menu item.
