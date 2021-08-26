@@ -16,7 +16,8 @@ Class {
 		'dependencies',
 		'iconName',
 		'position',
-		'layout'
+		'layout',
+		'color'
 	],
 	#category : #'Hierarchical-Model-Core'
 }
@@ -95,6 +96,18 @@ HNode >> collapseChildren [
 	children do: [ :child | child collapse ].
 ]
 
+{ #category : #accessing }
+HNode >> color [
+
+	^ color
+]
+
+{ #category : #accessing }
+HNode >> color: anObject [
+
+	color := anObject
+]
+
 { #category : #dependencies }
 HNode >> dependencies [
 
@@ -128,7 +141,8 @@ HNode >> dependencyTo: anHNode [
 HNode >> dependentsFromLinks [
 	| list |
 	list := (self dependencies
-		select: [ :link | link to = self ]
+		select: [ :link | 
+			link isVisible and: [ link to = self] ]
 		thenCollect: [:link | 
 			link from visibleNodeOrParent ]) asOrderedCollection.
 	(self isExpanded and: [ self isVisible ]) ifTrue: [ ^ list asSet ].
@@ -169,9 +183,46 @@ HNode >> hasChildren [
 	^ children notEmpty
 ]
 
+{ #category : #'showing - hiding' }
+HNode >> hideAllLinks [
+	self allDependencies do: [ :link | link isVisible: false ]
+]
+
+{ #category : #'showing - hiding' }
+HNode >> hideIncomingLinks [
+	self dependencies
+		select: [ :link | link to = self ]
+		thenDo: [ :link | link isVisible: false ] .
+	self children do: #hideIncomingLinks
+]
+
+{ #category : #'showing - hiding' }
+HNode >> hideLinkTo: anHNode [
+	self allDependencies do: [ :link | 
+		link to visibleNodeOrParent = anHNode ifTrue: [ 
+			link isVisible: false ].
+		 ].
+
+]
+
+{ #category : #'showing - hiding' }
+HNode >> hideOutgoingLinks [
+	self dependencies
+		select: [ :link | link from = self ]
+		thenDo: [ :link | link isVisible: false ] .
+	self children do: #hideOutgoingLinks
+]
+
 { #category : #accessing }
 HNode >> iconName: aString [
-	iconName := aString
+	| oldName |
+	oldName := iconName.
+	iconName := aString.
+	oldName = aString ifTrue: [ ^ self ].
+	self announce: (HIconChangedEvent new
+		oldName: oldName;
+		newName: aString;
+		yourself).
 ]
 
 { #category : #initialization }
@@ -190,6 +241,16 @@ HNode >> isExpanded [
 HNode >> isVisible [
 	parent ifNil: [ ^ true ].
 	^ parent isExpanded and: [ parent isVisible ]
+]
+
+{ #category : #accessing }
+HNode >> layout [
+	^ layout
+]
+
+{ #category : #accessing }
+HNode >> layout: aLayout [
+	layout := aLayout
 ]
 
 { #category : #accessing }
@@ -242,7 +303,7 @@ HNode >> position: aPoint [
 
 { #category : #printing }
 HNode >> printOn: stream [
-	stream << name.
+	stream << (name ifNil: [ 'nil' ])
 ]
 
 { #category : #announcer }
@@ -275,6 +336,11 @@ HNode >> removeLinkTo: anHNode [
 			link from removeLink: link ].
 		 ].
 
+]
+
+{ #category : #'showing - hiding' }
+HNode >> showAllLinks [
+	self allDependencies do: [ :link | link isVisible: true ]
 ]
 
 { #category : #dependencies }

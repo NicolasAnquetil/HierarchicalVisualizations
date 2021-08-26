@@ -7,24 +7,19 @@ Class {
 	#category : #'Hierarchical-Roassal3-Menu'
 }
 
-{ #category : #accessing }
-HRemoveLineMenuItem >> label [
-	^ 'Remove link'
-]
-
-{ #category : #accessing }
-HRemoveLineMenuItem >> removeLink [
+{ #category : #execution }
+HRemoveLineMenuItem >> execute [
 	shape model key removeLinkTo: shape model value.
 	visualization rebuildLines: shape.
 	
 ]
 
 { #category : #accessing }
-HRemoveLineMenuItem >> selector [
-	^ #removeLink
+HRemoveLineMenuItem >> label [
+	^ 'Remove link'
 ]
 
 { #category : #accessing }
-HRemoveLineMenuItem >> target [
-	^ self
+HRemoveLineMenuItem >> order [
+	^ 10
 ]

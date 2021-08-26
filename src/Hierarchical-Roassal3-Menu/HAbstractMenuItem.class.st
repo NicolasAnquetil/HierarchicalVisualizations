@@ -42,6 +42,7 @@ HAbstractMenuItem >> argument [
 { #category : #'building - menus' }
 HAbstractMenuItem >> buildOn: aMenuMorph [
 	| item |
+	self canBeExecuted ifFalse: [ ^ self ].
 	item := aMenuMorph
 		add: self label
 		target: self target
@@ -49,6 +50,15 @@ HAbstractMenuItem >> buildOn: aMenuMorph [
 		argument: self argument.
 	self iconName ifNil: [ ^ self ].
 	item icon: (self iconNamed: self iconName).
+]
+
+{ #category : #testing }
+HAbstractMenuItem >> canBeExecuted [
+	^ true
+]
+
+{ #category : #execution }
+HAbstractMenuItem >> execute [
 ]
 
 { #category : #accessing }
@@ -68,7 +78,7 @@ HAbstractMenuItem >> order [
 
 { #category : #accessing }
 HAbstractMenuItem >> selector [
-	^ #yourself
+	^ #execute
 ]
 
 { #category : #accessing }
@@ -79,7 +89,7 @@ HAbstractMenuItem >> shape: anObject [
 
 { #category : #accessing }
 HAbstractMenuItem >> target [
-	^ shape model
+	^ self
 ]
 
 { #category : #accessing }

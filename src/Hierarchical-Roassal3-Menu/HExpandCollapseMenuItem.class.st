@@ -7,6 +7,11 @@ Class {
 	#category : #'Hierarchical-Roassal3-Menu'
 }
 
+{ #category : #testing }
+HExpandCollapseMenuItem >> canBeExecuted [
+	^ shape model children isNotEmpty
+]
+
 { #category : #accessing }
 HExpandCollapseMenuItem >> label [
 	^ shape model isExpanded
@@ -22,4 +27,9 @@ HExpandCollapseMenuItem >> order [
 { #category : #accessing }
 HExpandCollapseMenuItem >> selector [
 	^ #expandCollapse
+]
+
+{ #category : #accessing }
+HExpandCollapseMenuItem >> target [
+	^ shape model
 ]

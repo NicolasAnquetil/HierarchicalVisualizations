@@ -39,6 +39,7 @@ HVisualizationExamples >> example03Simple2 [
 	node1 := HNode new name: 'Node1'.
 	subnode3 := HNode new name: 'Sub1-1'.
 	subnode4 := HNode new name: 'Sub1-2'.
+	
 	node1 addAll: { subnode3 . subnode4 }.
 
 	node2 := HNode new name: 'Node2'.
@@ -46,6 +47,7 @@ HVisualizationExamples >> example03Simple2 [
 	subnode2 := HNode new name: 'Sub2-2'.
 	node2 addAll: {subnode1. subnode2}.
 	
+	node1 children, node2 children do: [ :child | child color: Color blue translucent ].
 	rootNode := HNode new name: 'Root'.
 	rootNode addAll: { node1. node2 }.
 	subnode3 dependenciesToNodes: { subnode1. subnode2 }.
@@ -98,16 +100,6 @@ HVisualizationExamples >> example07Hierarchical [
 ]
 
 { #category : #examples }
-HVisualizationExamples >> example08 [
-	<script: 'self new example08RSChart open'>
-	| b |
-	b := HPharoNodeBuilder new.
-	b packageQuery: 'Roassal3-Chart*'.
-	b build.
-	^ b rootNode
-]
-
-{ #category : #examples }
 HVisualizationExamples >> example08RSChart [
 	<script: 'self new example08RSChart open'>
 	| b |
@@ -123,6 +115,7 @@ HVisualizationExamples >> example09Collection [
 	| b |
 	b := HPharoNodeBuilder new.
 	b packageQuery: 'Collections-Abstract*'.
+	b colorPalette: NSScale eva10.
 	b build.
 	^ b rootNode
 ]
@@ -151,4 +144,42 @@ HVisualizationExamples >> example10RSChartLabeler [
 		yourself).
 	^ visualization
 	
+]
+
+{ #category : #examples }
+HVisualizationExamples >> example11HierarchicalDiferentLayout [
+	<script: 'self new example11HierarchicalDiferentLayout open'>
+	| b |
+	b := HPharoNodeBuilder new.
+	b packageQuery: 'Hierarchical*'.
+	b build.
+	b rootNode layout: RSVerticalLineLayout new. 
+	b rootNode children do: [ :child | 
+		child layout: RSFlowLayout new.
+		child children do: [:c | 
+			c layout: (RSForceBasedLayout new charge: -600; doNotUseProgressBar)
+			
+			 ] ].
+	^ b rootNode
+
+]
+
+{ #category : #examples }
+HVisualizationExamples >> example12HierarchicalWithDifferentLines [
+	<script: 'self new example12HierarchicalWithDifferentLines open'>
+	| b v |
+	b := HPharoNodeBuilder new.
+	b packageQuery: 'Hierarchical*'.
+	b build.
+	v := HSimpleVisualizationBuilder new
+		rootNode: b rootNode;
+		yourself.
+	v lineBuilder
+		markerStart: (RSEllipse new size: 10);
+		width: 5;
+		color: Color purple;
+		dashArray: #(15 5).
+	v build.
+	^ v canvas
+
 ]

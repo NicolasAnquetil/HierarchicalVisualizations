@@ -15,7 +15,8 @@ Class {
 		'boxChildrenColor',
 		'labeler',
 		'fullCornerRadius',
-		'baseNode'
+		'baseNode',
+		'linkStyler'
 	],
 	#category : #'Hierarchical-Roassal3-Visualization'
 }
@@ -87,26 +88,30 @@ HSimpleVisualizationBuilder >> buildCompositeEmptyNodeIn: shape [
 
 { #category : #hooks }
 HSimpleVisualizationBuilder >> buildCompositeFullNodeIn: shape [
-	| childrenShapes node icon label title titleBox children 
+	| childrenShapes node titleGroup title titleBox children 
 	boxChildren titleRadius boxChildrenRadius list |
 	node := shape model.
-	title := self labeler labelAndIconFor: node.
-	icon := title first.
-	label := title second.
+	titleGroup := self labeler labelAndIconFor: node.
 	titleBox := RSBox new
-		extent: title extent + 10;
+		extent: titleGroup extent + 10;
 		model: node;
 		color: ((self colorFor: node) alpha: 0.7);
-		position: title position;
+		position: titleGroup position;
 		yourself.
-	title := { titleBox. icon. label } asShape.
+	title := RSComposite new
+		add: titleBox; 
+		addAll: titleGroup;
+		adjustToChildren;
+		yourself.
 	shape propertyAt: #background put: titleBox.
 	childrenShapes := self childrenFor: node.
-	RSFlowLayout new gapSize: 10; on: childrenShapes.
+	self layoutOn: childrenShapes parent: node.
+	
 	shape schildren: childrenShapes.
 	childrenShapes do: [ :child | child sparent: shape ].
 	children := childrenShapes asShape
 		padding: 10.
+	childrenShapes do: [ :child | child model position: child position ].
 	title width < children width
 		ifTrue: [ titleBox width: children width. title adjustToChildren ]
 		ifFalse: [ children width: title width ].
@@ -139,17 +144,7 @@ HSimpleVisualizationBuilder >> childrenFor: node [
 
 { #category : #'public - hooks' }
 HSimpleVisualizationBuilder >> colorFor: node [
-	^ Color colorFrom: (colorPalette scale: node level)
-]
-
-{ #category : #accessing }
-HSimpleVisualizationBuilder >> colorPalette [
-	^ colorPalette
-]
-
-{ #category : #accessing }
-HSimpleVisualizationBuilder >> colorPalette: aNSOrdinalScale [
-	colorPalette := aNSOrdinalScale
+	^ Color colorFrom: (node color ifNil: [ #gray ])
 ]
 
 { #category : #'accessing - attributes' }
@@ -210,7 +205,7 @@ HSimpleVisualizationBuilder >> highlightable [
 HSimpleVisualizationBuilder >> initialize [
 	super initialize.
 	self labeler: HLabeler new.
-	self colorPalette: NSScale category10.
+	self linkStyler: HLinkStyler new.
 	self boxChildrenColorPalette: (NSScale ordinal 
 		range: Smalltalk ui theme roassalHNodeBackgroundColors).
 		
@@ -226,20 +221,32 @@ HSimpleVisualizationBuilder >> labeler: anHLabeler [
 	labeler := anHLabeler
 ]
 
-{ #category : #accessing }
-HSimpleVisualizationBuilder >> layoutOn: aGroupOfShapes [
-	RSFlowLayout new
-		gapSize: 50;
-		on: aGroupOfShapes.
+{ #category : #layout }
+HSimpleVisualizationBuilder >> layoutOn: aGroupOfShapes parent: shape [
+	aGroupOfShapes ifEmpty: [ ^ self ].
+	
+	aGroupOfShapes first model position ifNotNil: [ 
+		aGroupOfShapes do: [ :child | child position: (child model position ifNil: [ 0@0 ]) ].
+		^ self.
+		 ].
+	self relayout: aGroupOfShapes parent: shape.
+	
+	
 ]
 
 { #category : #hooks }
 HSimpleVisualizationBuilder >> lineBuilder [
-	^ RSLineBuilder line
-		attachPoint: (RSBorderAttachPoint new endOffset: 5);
-		markerEnd: (RSShapeFactory arrow size: 10);
-		color: Smalltalk ui theme textColor translucent;
-		yourself
+	^ self linkStyler lineBuilder
+]
+
+{ #category : #accessing }
+HSimpleVisualizationBuilder >> linkStyler [
+	^ linkStyler
+]
+
+{ #category : #accessing }
+HSimpleVisualizationBuilder >> linkStyler: anHLinkStyler [
+	linkStyler :=anHLinkStyler
 ]
 
 { #category : #'accessing - attributes' }
@@ -263,8 +270,9 @@ HSimpleVisualizationBuilder >> nodeAnnouncer [
 			color: Smalltalk ui theme caretColor);
 		@ self menuInteraction;
 		@ self highlightable;
-		when: RSPositionChangedEvent do: [ :evt | self resizeParent: evt ];
-		yourself .
+		
+		@ (HResizeParentWhenChildMoves new labeler: self labeler);
+		yourself.
 	^ baseNode announcer
 	
 ]
@@ -313,6 +321,18 @@ HSimpleVisualizationBuilder >> rebuildShape: shape [
 	canvas signalUpdate.
 ]
 
+{ #category : #layout }
+HSimpleVisualizationBuilder >> relayout: aGroupOfShapes parent: shape [
+	shape layout ifNil: [ 
+		RSFlowLayout new
+			gapSize: 10;
+			on: aGroupOfShapes. 
+		^ self ].
+	shape layout on: aGroupOfShapes.
+	
+	
+]
+
 { #category : #hooks }
 HSimpleVisualizationBuilder >> removeShapeWithAllChildren: shape [
 	
@@ -341,73 +361,22 @@ HSimpleVisualizationBuilder >> renderIn: aCanvas [
 		aCanvas signalUpdate.
 		 ].
 	self renderLinesIn: aCanvas.
-	self layoutOn: rootShapes.
+	self layoutOn: rootShapes parent: rootNode.
 	
 ]
 
 { #category : #hooks }
 HSimpleVisualizationBuilder >> renderLinesIn: aCanvas [
-	| announcer color |
-	color := Smalltalk ui theme textColor translucent.
+	| announcer high |
 	self lineBuilder
 		canvas: aCanvas;
 		shapes: shapes;
 		connectFromAll: #dependentsFromLinks.
 	announcer := Announcer new.
-	announcer
-		when: RSMouseEnter do: [ :evt | evt shape color: Color red; signalUpdate ];
-		when: RSMouseLeave do: [ :evt | evt shape color: color; signalUpdate ].
+	high := RSHighlightable red.
+	high onShape: announcer.
 	self menuInteraction onShape: announcer.
 	aCanvas lines do: [ :line| line announcer: announcer ].
-]
-
-{ #category : #hooks }
-HSimpleVisualizationBuilder >> resizeParent: event [
-	| parent children title titleBox list boxChildren lastPosition
-	shape delta brother referencePosition |
-	shape := event shape.
-	
-	parent := shape sparent.
-	parent ifNil: [ ^ self ].
-	parent isShape ifFalse: [ ^ self ].
-	
-	lastPosition := parent position.
-	delta := event newPosition - event oldPosition.
-	brother := referencePosition := nil.
-	parent schildren 
-		detect: [:child | child ~= shape ]
-		ifFound: [:child | 
-			brother := child.
-			referencePosition := child parent globalMatrix 
-				transform: child position ].
-	children := shape parent.
-	children adjustToChildren; padding: 10.
-	title := parent children first.
-	titleBox := title children first.
-	titleBox extent: title children allButFirst extent + 10.
-	title adjustToChildren.
-	boxChildren := parent children second.
-	title width < children width
-		ifTrue: [ titleBox width: children width. title adjustToChildren ]
-		ifFalse: [ children width: title width ].
-	list := { title. children }.
-	self labeler position = #below ifTrue: [ list := { children. title } ].
-	RSVerticalLineLayout new
-		gapSize: 0;
-		on: list.
-	boxChildren fromRectangle: children encompassingRectangle.
-	parent announcer: nil.
-	parent adjustToChildren.
-	parent announcer: self nodeAnnouncer.
-	
-	parent schildren size = 1 ifTrue: [ 
-		shape position: event oldPosition.
-		parent translateTo: lastPosition + delta.
-		^ self ].
-	
-	parent position: lastPosition.
-	delta := (brother parent globalMatrix transform: brother position) - referencePosition.
-	parent translateBy: delta negated.
 ]
 
 { #category : #accessing }
@@ -440,13 +409,13 @@ HSimpleVisualizationBuilder >> shapeFor: node [
 	(node isExpanded and: [node hasChildren]) 
 		ifTrue: [ self buildCompositeFullNodeIn: shape ]
 		ifFalse: [ self buildCompositeEmptyNodeIn: shape ].
-	shape
-		when: RSPositionChangedEvent do: [ :evt | evt shape model position: evt position ].
+	
 	node 
 		removeInteractionIfPresent: self class;
 		when: HNodeAddedEvent do: [ :evt | self rebuildRootShape: shape ];
 		when: HCollapseEvent do: [ :evt |	self rebuildShape: shape ];
-		when: HExpandEvent do: [ :evt | self rebuildRootShape: shape ].
+		when: HExpandEvent do: [ :evt | self rebuildRootShape: shape ];
+		when: HIconChangedEvent do: [ :evt | self rebuildShape: shape ].
 	shapes add: shape.
 	^ shape 
 	
