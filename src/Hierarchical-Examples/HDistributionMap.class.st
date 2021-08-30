@@ -86,13 +86,13 @@ HDistributionMap >> childrenBlock: aBlock [
 { #category : #accessing }
 HDistributionMap >> colorMap [
 
-	^ colorMap
+	^ self colorPalette
 ]
 
 { #category : #accessing }
 HDistributionMap >> colorMap: anObject [
 
-	colorMap := anObject
+	self colorPalette: anObject
 ]
 
 { #category : #accessing }
@@ -120,16 +120,6 @@ HDistributionMap >> numberOfchildrenWithProperty: aProp forNode: aNode [
 	^aNode children count: [ :childNode | childNode level = aProp ]
 ]
 
-{ #category : #rendering }
-HDistributionMap >> open [
-	self buildNodes.
-	self rootNode: rootNode.
-	self colorPalette: (colorMap domain: allProperties).
-
-	super open
-	
-]
-
 { #category : #private }
 HDistributionMap >> orderInnerNodes: innerNodes [
 	^innerNodes sorted: [ :a :b | a value < b value ]
@@ -149,26 +139,6 @@ HDistributionMap >> orderOuterNodes: aCollectionOfNodes [
 	engine hierarchicalClusteringUsing: #averageLinkage.
 	^engine dendrogram orderLeafs collect: #item.
 	
-]
-
-{ #category : #rendering }
-HDistributionMap >> outerNodeChildren: anElement [
-	^(children value: anElement)
-		asOrderedCollection
-			collect: [ :child | self buildInnerNode: child]	
-
-]
-
-{ #category : #accessing }
-HDistributionMap >> property [
-
-	^ property
-]
-
-{ #category : #accessing }
-HDistributionMap >> property: anObject [
-
-	property := anObject
 ]
 
 { #category : #accessing }
