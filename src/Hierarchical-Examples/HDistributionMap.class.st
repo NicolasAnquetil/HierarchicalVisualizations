@@ -38,6 +38,18 @@ HDistributionMap >> buildInnerNode: anElement [
 ]
 
 { #category : #rendering }
+HDistributionMap >> buildNodes [
+	| outerNodes |
+	rootNode := HNode new.
+	rootNode name: 'Root'.
+	outerNodes := Dictionary new: elements size.
+	elements do: [ :elt |
+		outerNodes at: elt put: (self outerNodeChildren: elt)].
+	allProperties := allProperties asOrderedCollection.
+	rootNode addAll: (self orderOuterNodes: (self buildOuterNodes: outerNodes)) 
+]
+
+{ #category : #rendering }
 HDistributionMap >> buildNodes: aCollection [
 	| innerNodes |
 
@@ -74,13 +86,13 @@ HDistributionMap >> childrenBlock: aBlock [
 { #category : #accessing }
 HDistributionMap >> colorMap [
 
-	^ self colorPalette
+	^ colorMap
 ]
 
 { #category : #accessing }
 HDistributionMap >> colorMap: anObject [
 
-	self colorPalette: anObject
+	colorMap := anObject
 ]
 
 { #category : #accessing }
@@ -108,6 +120,16 @@ HDistributionMap >> numberOfchildrenWithProperty: aProp forNode: aNode [
 	^aNode children count: [ :childNode | childNode level = aProp ]
 ]
 
+{ #category : #rendering }
+HDistributionMap >> open [
+	self buildNodes.
+	self rootNode: rootNode.
+	self colorPalette: (colorMap domain: allProperties).
+
+	super open
+	
+]
+
 { #category : #private }
 HDistributionMap >> orderInnerNodes: innerNodes [
 	^innerNodes sorted: [ :a :b | a value < b value ]
@@ -127,6 +149,26 @@ HDistributionMap >> orderOuterNodes: aCollectionOfNodes [
 	engine hierarchicalClusteringUsing: #averageLinkage.
 	^engine dendrogram orderLeafs collect: #item.
 	
+]
+
+{ #category : #rendering }
+HDistributionMap >> outerNodeChildren: anElement [
+	^(children value: anElement)
+		asOrderedCollection
+			collect: [ :child | self buildInnerNode: child]	
+
+]
+
+{ #category : #accessing }
+HDistributionMap >> property [
+
+	^ property
+]
+
+{ #category : #accessing }
+HDistributionMap >> property: anObject [
+
+	property := anObject
 ]
 
 { #category : #accessing }
