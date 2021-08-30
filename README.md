@@ -44,3 +44,30 @@ Node can be collapsed or expanded:
 <img width="500" alt="portfolio_view" src="https://raw.githubusercontent.com/ObjectProfile/HierarchicalVisualizations/main/scripts/simpleExample02.png">
 
 New menu items can be defined by creating a subclass of `HAbstractMenuItem`. The package [`Hierarchical-Roassal3-Menu`](https://github.com/ObjectProfile/HierarchicalVisualizations/tree/main/src/Hierarchical-Roassal3-Menu) contains many examples on how to define a new menu item.
+
+# Extensions
+
+## Heat Map
+
+An example of a Heat map extension for a Famix `model`:
+
+```Smalltalk
+HHeatMap new
+	elements: model allModelClasses ;
+	colorMin: (Color fromHexString: #FFF0F0) ;  "VERY PALE red, default is white"
+	property: [ :clazz | clazz fanOut ] ;
+	open.
+```
+
+## Distribution Map
+
+An example of a DistributionMap extension for a Famix `model`:
+
+```Smalltalk
+HDistributionMap new
+	property: [ :clazz | #(Athens Cairo Morph) detect: [ :pref | clazz name includesSubstring: pref ] ifNone: [ #Other ] ] ;
+	colorMap: RSColorPalette diverging brbg4 ;
+	elements: model allModelPackages ;
+	children: [ :pckg | pckg allClasses ] ;
+	open.
+```
