@@ -1,5 +1,5 @@
 Class {
-	#name : #HHeatMapNode,
+	#name : #HValuedNode,
 	#superclass : #HNode,
 	#instVars : [
 		'value'
@@ -8,19 +8,12 @@ Class {
 }
 
 { #category : #accessing }
-HHeatMapNode >> level [
-
+HValuedNode >> value [
 	^ value
 ]
 
 { #category : #accessing }
-HHeatMapNode >> value [
-
-	^ value
-]
-
-{ #category : #accessing }
-HHeatMapNode >> value: anObject [
+HValuedNode >> value: anObject [
 
 	value := anObject
 ]

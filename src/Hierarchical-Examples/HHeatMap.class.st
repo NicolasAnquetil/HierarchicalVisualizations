@@ -1,6 +1,6 @@
 Class {
 	#name : #HHeatMap,
-	#superclass : #HSimpleVisualizationBuilder,
+	#superclass : #HPaletteNodeBuilder,
 	#instVars : [
 		'elements',
 		'property',
@@ -12,28 +12,35 @@ Class {
 	#category : #'Hierarchical-Examples'
 }
 
-{ #category : #'instance creation' }
+{ #category : #building }
+HHeatMap >> build [
+	| allNodes |
+	rootNode := HNode new.
+	allNodes := elements collect: [ :elt | self buildElementNode: elt].
+
+	colorPalette := (NSScale linear
+		range: {colorMin . colorMax} ;
+		domain: {valueMin .valueMax} ;
+		yourself ).
+
+	allNodes do: [ :node | self updateNodeColor: node ].
+	rootNode addAll: (allNodes sorted: [ :a :b | a value < b value ]).
+	
+]
+
+{ #category : #building }
 HHeatMap >> buildElementNode: anElement [
 	| elementValue |
 	elementValue := (property value: anElement).
 	self updateValueRange: elementValue.
 
-	^HHeatMapNode new
+	^HValuedNode new
 		name: anElement name ;
 		rawModel: anElement ;
 		value: elementValue ;
 		yourself
 	
 
-]
-
-{ #category : #'instance creation' }
-HHeatMap >> buildNodes [
-	| allNodes |
-	rootNode := HNode new.
-	rootNode name: 'Root'.
-	allNodes := elements collect: [ :elt | self buildElementNode: elt].
-	rootNode addAll: (allNodes sorted: [ :a :b | a level < b level ])
 ]
 
 { #category : #accessing }
@@ -83,21 +90,6 @@ HHeatMap >> initialize [
 	property := [ :elt | 0 ]
 ]
 
-{ #category : #'instance creation' }
-HHeatMap >> open [
-	self buildNodes.
-
-	self colorPalette: (NSScale linear
-		range: {colorMin . colorMax} ;
-		domain: {valueMin .valueMax} ;
-		yourself ).
-
-	self rootNode: rootNode.
-
-	super open
-	
-]
-
 { #category : #accessing }
 HHeatMap >> property [
 
@@ -110,7 +102,7 @@ HHeatMap >> property: anObject [
 	property := anObject
 ]
 
-{ #category : #'instance creation' }
+{ #category : #building }
 HHeatMap >> updateValueRange: aValue [
 
 	valueMin
