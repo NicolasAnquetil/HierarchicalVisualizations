@@ -49,25 +49,31 @@ New menu items can be defined by creating a subclass of `HAbstractMenuItem`. The
 
 ## Heat Map
 
-An example of a Heat map extension for a Famix `model`:
+An example of a Heat map extension for a Famix `model`. "Intensity" of `fanout` is indicated in red:
 
 ```Smalltalk
 HHeatMap new
 	elements: model allModelClasses ;
 	colorMin: (Color fromHexString: #FFF0F0) ;  "VERY PALE red, default is white"
+	colorMax: Color red ;   "this is the default anyway"
 	property: [ :clazz | clazz fanOut ] ;
 	open.
 ```
 
 ## Distribution Map
 
-An example of a DistributionMap extension for a Famix `model`:
+An example of a DistributionMap for a Famix `model`. There are four categories according to the number of methods in the class (less than 5, 6 to 10, 11 to 25, more than 25). Categories are colored according to a red/gray map (`RSColorPalette diverging rdgy4`) :
 
 ```Smalltalk
 HDistributionMap new
-	property: [ :clazz | #(Athens Cairo Morph) detect: [ :pref | clazz name includesSubstring: pref ] ifNone: [ #Other ] ] ;
-	colorMap: RSColorPalette diverging brbg4 ;
 	elements: model allModelPackages ;
-	children: [ :pckg | pckg allClasses ] ;
+	childrenBlock: [ :pckg | pckg allClasses ] ;
+	propertyBlock: [ :clazz | 
+		{ 0 -> (0 to: 5) .
+		 1 -> (6 to: 10) .
+		 2 -> (11 to: 25) .
+		 3 -> (26 to: 999999) }
+		 detect: [ :cat | cat value includes: (clazz numberOfMethods) ] ] ;
+	colorMap: RSColorPalette diverging rdgy4 ;
 	open.
 ```
