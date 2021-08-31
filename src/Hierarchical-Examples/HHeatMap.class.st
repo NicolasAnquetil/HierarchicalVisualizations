@@ -1,6 +1,6 @@
 Class {
 	#name : #HHeatMap,
-	#superclass : #HSimpleVisualizationBuilder,
+	#superclass : #HPaletteNodeBuilder,
 	#instVars : [
 		'elements',
 		'property',

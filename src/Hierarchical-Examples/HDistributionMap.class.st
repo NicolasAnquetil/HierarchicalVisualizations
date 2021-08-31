@@ -14,15 +14,13 @@ Class {
 HDistributionMap >> build [
 	| outerNodes |
 	outerNodes := self buildNodes: elements.
-
-	self colorPalette domain: allProperties asOrderedCollection.
-	outerNodes do: [ :node | self updateNodeColor: node ].
+	self colorNodes: outerNodes.
 
 	rootNode := HNode new.
 	rootNode addAll: (self orderOuterNodes: outerNodes)
 ]
 
-{ #category : #rendering }
+{ #category : #building }
 HDistributionMap >> buildInnerNode: anElement [
 	| elementValue |
 	elementValue := (propertyBlock value: anElement).
@@ -37,45 +35,15 @@ HDistributionMap >> buildInnerNode: anElement [
 
 ]
 
-{ #category : #rendering }
-HDistributionMap >> buildNodes [
-	| outerNodes |
-	rootNode := HNode new.
-	rootNode name: 'Root'.
-	outerNodes := Dictionary new: elements size.
-	elements do: [ :elt |
-		outerNodes at: elt put: (self outerNodeChildren: elt)].
-	allProperties := allProperties asOrderedCollection.
-	rootNode addAll: (self orderOuterNodes: (self buildOuterNodes: outerNodes)) 
-]
-
-{ #category : #rendering }
+{ #category : #building }
 HDistributionMap >> buildNodes: aCollection [
-	| innerNodes |
-
 	allProperties := Set new.
-	innerNodes := Dictionary new: elements size.
-
-	elements do: [ :elt |
-		innerNodes at: elt put: (self innerNodeFor: elt)].
-
 	^aCollection collect: [ :elt |
 			HNode new
 				name: elt name ;
 				rawModel: elt ;
-				addAll: (self orderInnerNodes: (innerNodes at: elt)) ;
+				addAll: (self orderInnerNodes: (self innerNodesFor: elt)) ;
 				yourself]
-]
-
-{ #category : #rendering }
-HDistributionMap >> buildOuterNode: anElement withChildren: childrenNodes [
-	^HNode new
-		name: anElement name ;
-		rawModel: anElement ;
-		children: (self orderInnerNodes: childrenNodes) ;
-		yourself
-	
-
 ]
 
 { #category : #accessing }
@@ -95,6 +63,15 @@ HDistributionMap >> colorMap: anObject [
 	self colorPalette: anObject
 ]
 
+{ #category : #building }
+HDistributionMap >> colorNodes: outerNodes [
+
+	self colorPalette domain: allProperties asOrderedCollection.
+	outerNodes do: [ :outerNode | 
+		outerNode children do: [ :innerNode | 
+			self updateNodeColor: innerNode ] ]
+]
+
 { #category : #accessing }
 HDistributionMap >> elements [
 
@@ -107,8 +84,8 @@ HDistributionMap >> elements: anObject [
 	elements := anObject
 ]
 
-{ #category : #rendering }
-HDistributionMap >> innerNodeFor: anElement [
+{ #category : #building }
+HDistributionMap >> innerNodesFor: anElement [
 	^(childrenBlock value: anElement)
 		asOrderedCollection
 			collect: [ :child | self buildInnerNode: child]	
@@ -117,7 +94,7 @@ HDistributionMap >> innerNodeFor: anElement [
 
 { #category : #private }
 HDistributionMap >> numberOfchildrenWithProperty: aProp forNode: aNode [
-	^aNode children count: [ :childNode | childNode level = aProp ]
+	^aNode children count: [ :childNode | childNode value = aProp ]
 ]
 
 { #category : #private }
