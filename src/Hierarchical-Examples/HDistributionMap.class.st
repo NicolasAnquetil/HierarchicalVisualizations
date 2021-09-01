@@ -1,6 +1,6 @@
 Class {
 	#name : #HDistributionMap,
-	#superclass : #HPaletteNodeBuilder,
+	#superclass : #HSimpleVisualizationBuilder,
 	#instVars : [
 		'elements',
 		'allProperties',
@@ -12,12 +12,9 @@ Class {
 
 { #category : #building }
 HDistributionMap >> build [
-	| outerNodes |
-	outerNodes := self buildNodes: elements.
-	self colorNodes: outerNodes.
-
-	rootNode := HNode new.
-	rootNode addAll: (self orderOuterNodes: outerNodes)
+	self buildNodes.
+	self buildLegend.
+	super build
 ]
 
 { #category : #building }
@@ -36,14 +33,38 @@ HDistributionMap >> buildInnerNode: anElement [
 ]
 
 { #category : #building }
-HDistributionMap >> buildNodes: aCollection [
+HDistributionMap >> buildLegend [
+	| builder |
+	builder := RSLegend new
+		container: self canvas ;
+		title: 'Properties' ;
+		onDemand ;
+		yourself.
+	allProperties do: [ :prop |
+		builder text: prop withBoxColor: (colorPalette scale: prop)
+	].
+	builder build.
+
+]
+
+{ #category : #building }
+HDistributionMap >> buildNodes [
+	| outerNodes |
 	allProperties := Set new.
-	^aCollection collect: [ :elt |
-			HNode new
-				name: elt name ;
-				rawModel: elt ;
-				addAll: (self orderInnerNodes: (self innerNodesFor: elt)) ;
-				yourself]
+	outerNodes := elements collect: [ :elt | self buildOuterNode: elt ].
+	self colorNodes: outerNodes.
+
+	rootNode := HNode new.
+	rootNode addAll: (self orderOuterNodes: outerNodes).
+]
+
+{ #category : #building }
+HDistributionMap >> buildOuterNode: element [
+	^HNode new
+		name: element name ;
+		rawModel: element ;
+		addAll: (self orderInnerNodes: (self innerNodesFor: element)) ;
+		yourself
 ]
 
 { #category : #accessing }
@@ -52,24 +73,18 @@ HDistributionMap >> childrenBlock: aBlock [
 ]
 
 { #category : #accessing }
-HDistributionMap >> colorMap [
-
-	^ self colorPalette
-]
-
-{ #category : #accessing }
 HDistributionMap >> colorMap: anObject [
 
-	self colorPalette: anObject
+	colorPalette := anObject
 ]
 
 { #category : #building }
 HDistributionMap >> colorNodes: outerNodes [
+	colorPalette domain: allProperties asOrderedCollection.
 
-	self colorPalette domain: allProperties asOrderedCollection.
 	outerNodes do: [ :outerNode | 
-		outerNode children do: [ :innerNode | 
-			self updateNodeColor: innerNode ] ]
+		outerNode children do: [ :innerNode |
+			innerNode color: (colorPalette scale: innerNode level) ] ]
 ]
 
 { #category : #accessing }

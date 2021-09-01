@@ -1,6 +1,6 @@
 Class {
 	#name : #HHeatMap,
-	#superclass : #HPaletteNodeBuilder,
+	#superclass : #HSimpleVisualizationBuilder,
 	#instVars : [
 		'elements',
 		'property',
@@ -14,17 +14,8 @@ Class {
 
 { #category : #building }
 HHeatMap >> build [
-	| allNodes |
-	rootNode := HNode new.
-	allNodes := elements collect: [ :elt | self buildElementNode: elt].
-
-	colorPalette := (NSScale linear
-		range: {colorMin . colorMax} ;
-		domain: {valueMin .valueMax} ;
-		yourself ).
-
-	allNodes do: [ :node | self updateNodeColor: node ].
-	rootNode addAll: (allNodes sorted: [ :a :b | a value < b value ]).
+	self buildNodes.
+	super build
 	
 ]
 
@@ -41,6 +32,24 @@ HHeatMap >> buildElementNode: anElement [
 		yourself
 	
 
+]
+
+{ #category : #building }
+HHeatMap >> buildNodes [
+	| allNodes |
+	rootNode := HNode new.
+	allNodes := elements collect: [ :elt | self buildElementNode: elt].
+
+	colorPalette := (NSScale linear
+		range: {colorMin . colorMax} ;
+		domain: {valueMin .valueMax} ;
+		yourself ).
+
+	allNodes do: [ :node | self updateNodeColor: node ].
+	rootNode addAll: (allNodes sorted: [ :a :b | a value < b value ]).
+
+	super build
+	
 ]
 
 { #category : #accessing }
@@ -100,6 +109,13 @@ HHeatMap >> property [
 HHeatMap >> property: anObject [
 
 	property := anObject
+]
+
+{ #category : #building }
+HHeatMap >> updateNodeColor: node [
+	node color: (colorPalette scale: node level).
+	node children do: [ :child| self updateNodeColor: child ].
+	
 ]
 
 { #category : #building }

@@ -8,6 +8,12 @@ Class {
 }
 
 { #category : #accessing }
+HValuedNode >> level [
+	"compatibility with HSimpleVisualizationBuilder"
+	^self value
+]
+
+{ #category : #accessing }
 HValuedNode >> value [
 	^ value
 ]
