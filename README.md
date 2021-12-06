@@ -11,7 +11,7 @@ Execute the following code snippet in a Playground:
 ```Smalltalk
 [ Metacello new
     baseline: 'HierarchicalVisualizations';
-    repository: 'github://ObjectProfile/HierarchicalVisualizations:main';
+    repository: 'github://NicolasAnquetil/HierarchicalVisualizations:main';
     load ] on: MCMergeOrLoadWarning do: [:warning | warning load ]
 ```
 
